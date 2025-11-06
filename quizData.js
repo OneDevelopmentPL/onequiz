@@ -32,7 +32,7 @@ const quizzes = {
 
   wycieczka: [
     {
-      q= "Gdzie byliśmy na wycieczce?",
+      q: "Gdzie byliśmy na wycieczce?",
       a: ["idk leave me alone","Góry","Galadice", "Kozlice"],
       correct: 3
     }
