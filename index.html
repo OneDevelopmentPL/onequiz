@@ -1,30 +1,415 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OneQuiz</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SameQuizy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .quiz-title {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: #f0f0f0;
+            height: 10px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .answer-btn {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            padding: 18px 25px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            color: #333;
+        }
+
+        .answer-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .answer-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .answer-btn.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .answer-btn.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+
+        .answer-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .next-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .next-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .results {
+            text-align: center;
+        }
+
+        .results h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 3em;
+            color: #764ba2;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+
+        .score-message {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .error {
+            text-align: center;
+            color: #f44336;
+            padding: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .question {
+                font-size: 1.1em;
+            }
+
+            .answer-btn {
+                padding: 15px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1 id="quiz-title">OneQuiz</h1>
-      <p id="quiz-category"></p>
-    </header>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 SameQuizy</h1>
+        </div>
+        <div id="app">
+            <div class="loading">Ładowanie quizu...</div>
+        </div>
+    </div>
 
-    <main id="quiz-box">
-      <div id="question" class="question"></div>
-      <div id="answers" class="answers"></div>
-      <button id="next-btn" class="next-btn">Dalej</button>
-    </main>
+    <script src="quizData.js"></script>
+    <script>
+        class QuizApp {
+            constructor() {
+                this.currentQuestion = 0;
+                this.score = 0;
+                this.selectedAnswer = null;
+                this.quizData = null;
+                this.init();
+            }
 
-    <footer>
-      <p>Made with ❤️ by <a href="https://github.com/OneDevelopment" target="_blank">OneDevelopment</a></p>
-    </footer>
-  </div>
+            init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const quizName = urlParams.get('quiz');
+                
+                if (quizName && window.quizzes && window.quizzes[quizName]) {
+                    this.quizData = window.quizzes[quizName];
+                    this.render();
+                } else if (window.quizzes && Object.keys(window.quizzes).length > 0) {
+                    // Jeśli nie podano nazwy quizu, użyj pierwszego dostępnego
+                    const firstQuizName = Object.keys(window.quizzes)[0];
+                    this.quizData = window.quizzes[firstQuizName];
+                    this.render();
+                } else {
+                    this.showError('Nie znaleziono quizu. Sprawdź plik quizData.js');
+                }
+            }
 
-  <script src="quizData.js"></script>
-  <script src="script.js"></script>
+            render() {
+                const app = document.getElementById('app');
+                
+                if (this.currentQuestion < this.quizData.questions.length) {
+                    app.innerHTML = this.renderQuestion();
+                    this.attachEventListeners();
+                } else {
+                    app.innerHTML = this.renderResults();
+                    this.attachRestartListener();
+                }
+            }
+
+            renderQuestion() {
+                const question = this.quizData.questions[this.currentQuestion];
+                const progress = ((this.currentQuestion / this.quizData.questions.length) * 100).toFixed(0);
+                
+                return `
+                    <div class="quiz-title">${this.quizData.title}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="question-container">
+                        <div class="question-number">Pytanie ${this.currentQuestion + 1} z ${this.quizData.questions.length}</div>
+                        <div class="question">${question.question}</div>
+                        <div class="answers">
+                            ${question.answers.map((answer, index) => 
+                                `<button class="answer-btn" data-index="${index}">${answer}</button>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <button class="next-btn" disabled>Następne pytanie</button>
+                `;
+            }
+
+            renderResults() {
+                const percentage = ((this.score / this.quizData.questions.length) * 100).toFixed(0);
+                let message = '';
+                
+                if (percentage === 100) {
+                    message = '🏆 Perfekcyjnie! Jesteś mistrzem!';
+                } else if (percentage >= 80) {
+                    message = '🌟 Świetna robota!';
+                } else if (percentage >= 60) {
+                    message = '👍 Dobry wynik!';
+                } else if (percentage >= 40) {
+                    message = '📚 Niezły start, możesz lepiej!';
+                } else {
+                    message = '💪 Spróbuj jeszcze raz!';
+                }
+
+                return `
+                    <div class="results">
+                        <h2>Koniec quizu!</h2>
+                        <div class="score">${this.score} / ${this.quizData.questions.length}</div>
+                        <div class="score-message">${message}</div>
+                        <div style="color: #666; margin-bottom: 30px;">
+                            Twój wynik: ${percentage}%
+                        </div>
+                        <button class="restart-btn">🔄 Spróbuj ponownie</button>
+                    </div>
+                `;
+            }
+
+            showError(message) {
+                const app = document.getElementById('app');
+                app.innerHTML = `
+                    <div class="error">
+                        <h2>❌ Błąd</h2>
+                        <p>${message}</p>
+                        <p style="margin-top: 20px; font-size: 0.9em;">
+                            Przykładowe użycie:<br>
+                            <code>?quiz=historia</code>
+                        </p>
+                    </div>
+                `;
+            }
+
+            attachEventListeners() {
+                const answerButtons = document.querySelectorAll('.answer-btn');
+                const nextButton = document.querySelector('.next-btn');
+
+                answerButtons.forEach(btn => {
+                    btn.addEventListener('click', () => this.selectAnswer(btn));
+                });
+
+                nextButton.addEventListener('click', () => this.nextQuestion());
+            }
+
+            selectAnswer(button) {
+                const answerIndex = parseInt(button.dataset.index);
+                const question = this.quizData.questions[this.currentQuestion];
+                const answerButtons = document.querySelectorAll('.answer-btn');
+                const nextButton = document.querySelector('.next-btn');
+
+                // Usuń poprzednie zaznaczenie
+                answerButtons.forEach(btn => {
+                    btn.classList.remove('selected', 'correct', 'incorrect');
+                    btn.disabled = true;
+                });
+
+                // Zaznacz wybraną odpowiedź
+                this.selectedAnswer = answerIndex;
+
+                if (answerIndex === question.correct) {
+                    button.classList.add('correct');
+                    this.score++;
+                } else {
+                    button.classList.add('incorrect');
+                    // Pokaż poprawną odpowiedź
+                    answerButtons[question.correct].classList.add('correct');
+                }
+
+                nextButton.disabled = false;
+            }
+
+            nextQuestion() {
+                this.currentQuestion++;
+                this.selectedAnswer = null;
+                this.render();
+            }
+
+            attachRestartListener() {
+                const restartButton = document.querySelector('.restart-btn');
+                if (restartButton) {
+                    restartButton.addEventListener('click', () => {
+                        this.currentQuestion = 0;
+                        this.score = 0;
+                        this.selectedAnswer = null;
+                        this.render();
+                    });
+                }
+            }
+        }
+
+        // Uruchom aplikację po załadowaniu DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => new QuizApp());
+        } else {
+            new QuizApp();
+        }
+    </script>
 </body>
 </html>
