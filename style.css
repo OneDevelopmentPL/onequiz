@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: radial-gradient(circle at top, #222, #111);
+  color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.app {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+}
+
+header h1 {
+  margin-bottom: 0.2em;
+  font-size: 2em;
+  color: #4fc3f7;
+}
+
+#quiz-category {
+  color: #aaa;
+  margin-bottom: 1em;
+}
+
+.question {
+  font-size: 1.3em;
+  margin-bottom: 20px;
+}
+
+.answers button {
+  display: block;
+  width: 100%;
+  background: #333;
+  color: #fff;
+  border: 2px solid #444;
+  border-radius: 10px;
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.answers button:hover {
+  background: #4fc3f7;
+  color: #000;
+}
+
+.next-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1em;
+  background: #4fc3f7;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.next-btn:hover {
+  background: #81d4fa;
+}
+
+footer {
+  margin-top: 30px;
+  font-size: 0.8em;
+  color: #888;
+}
+
+footer a {
+  color: #4fc3f7;
+  text-decoration: none;
+}
