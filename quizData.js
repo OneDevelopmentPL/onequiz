@@ -8,7 +8,7 @@ const quizzes = {
     {
       q: "Który język służy do stylowania stron?",
       a: ["HTML", "CSS", "Python", "C++"],
-      correct: 1
+      correct: 4
     },
     {
       q: "Który symbol służy do komentarza w JavaScript?",
@@ -27,6 +27,14 @@ const quizzes = {
       q: "Największy kontynent to...",
       a: ["Afryka", "Azja", "Ameryka", "Europa"],
       correct: 1
+    }
+  ],
+
+  wycieczka: [
+    {
+      q= "Gdzie byliśmy na wycieczce?",
+      a: ["idk leave me alone","Góry","Galadice", "Kozlice"],
+      correct: 3
     }
   ]
 };
