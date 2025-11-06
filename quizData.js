@@ -8,7 +8,7 @@ const quizzes = {
     {
       q: "Który język służy do stylowania stron?",
       a: ["HTML", "CSS", "Python", "C++"],
-      correct: 4
+      correct: 3
     },
     {
       q: "Który symbol służy do komentarza w JavaScript?",
