@@ -254,19 +254,30 @@
             }
 
             init() {
+                // Sprawdź czy quizData.js został załadowany
+                if (!window.quizzes) {
+                    this.showError('Plik quizData.js nie został załadowany. Sprawdź czy plik istnieje w tym samym folderze co index.html');
+                    return;
+                }
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const quizName = urlParams.get('quiz');
                 
-                if (quizName && window.quizzes && window.quizzes[quizName]) {
+                console.log('Dostępne quizy:', Object.keys(window.quizzes));
+                console.log('Żądany quiz:', quizName);
+                
+                if (quizName && window.quizzes[quizName]) {
                     this.quizData = window.quizzes[quizName];
                     this.render();
-                } else if (window.quizzes && Object.keys(window.quizzes).length > 0) {
+                } else if (quizName && !window.quizzes[quizName]) {
+                    this.showError(`Quiz "${quizName}" nie istnieje. Dostępne quizy: ${Object.keys(window.quizzes).join(', ')}`);
+                } else if (Object.keys(window.quizzes).length > 0) {
                     // Jeśli nie podano nazwy quizu, użyj pierwszego dostępnego
                     const firstQuizName = Object.keys(window.quizzes)[0];
                     this.quizData = window.quizzes[firstQuizName];
                     this.render();
                 } else {
-                    this.showError('Nie znaleziono quizu. Sprawdź plik quizData.js');
+                    this.showError('Nie znaleziono żadnych quizów w pliku quizData.js');
                 }
             }
 
