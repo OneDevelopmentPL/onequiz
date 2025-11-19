@@ -94,6 +94,37 @@ window.quizzes = {
             }
         ]
     },
+
+    'naukadwa': {
+        title: 'Quiz Naukowy',
+        questions: [
+            {
+                question: 'Jaki jest symbol chemiczny złota?',
+                answers: ['Au', 'Ag', 'Fe', 'Cu'],
+                correct: 0
+            },
+            {
+                question: 'Ile planet znajduje się w Układzie Słonecznym?',
+                answers: ['8', '9', '7', '10'],
+                correct: 0
+            },
+            {
+                question: 'Kto odkrył penicylinę?',
+                answers: ['Alexander Fleming', 'Louis Pasteur', 'Marie Curie', 'Isaac Newton'],
+                correct: 0
+            },
+            {
+                question: 'Jaka jest prędkość światła w próżni?',
+                answers: ['300 000 km/s', '150 000 km/s', '500 000 km/s', '200 000 km/s'],
+                correct: 0
+            },
+            {
+                question: 'Co to jest DNA?',
+                answers: ['Kwas deoksyrybonukleinowy', 'Kwas rybonukleinowy', 'Białko', 'Węglowodan'],
+                correct: 0
+            }
+        ]
+    },
     
     'sport': {
         title: 'Quiz Sportowy',
