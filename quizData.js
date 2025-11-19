@@ -125,6 +125,32 @@ window.quizzes = {
             }
         ]
     },
+    'programowanie': {
+        title: 'Quiz Programowanie',
+        questions: [
+            {
+                question: 'test,',
+                answers: ['tak', 'n', 'n', 'n'],
+                correct: 0
+            },
+            {
+                question: ' test2',
+                answers: ['n', 't', 'n', 'n'],
+                correct: 1
+            },
+            {
+                question: ' test3',
+                answers: ['n', 'n', 't', 'n'],
+                correct: 2
+            },
+            {
+                question: ' test4',
+                answers: ['n', 'n', 'n', 't'],
+                correct: 3
+            },
+            
+        ]
+    },
     
     'filmy': {
         title: 'Quiz Filmowy',
