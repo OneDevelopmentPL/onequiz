@@ -1,91 +1,423 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OneQuiz - Twoje quizy online</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Profesjonalne Quizy — panel</title>
+  <style>
+    /* ===== style.css (wbudowany) ===== */
+    :root{
+      --bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--glass: rgba(255,255,255,0.03);
+      --success:#10b981;--danger:#ef4444; --radius:14px; --gap:14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071023 0%, #07182a 50%);color:#e6eef6}
+    .wrap{max-width:1100px;margin:32px auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between}
+    h1{font-size:20px;margin:0}
+    .controls{display:flex;gap:10px;align-items:center}
+    input[type=text], input[type=search], textarea, select{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:inherit}
+    button{background:linear-gradient(90deg,var(--accent), #0891b2);border:0;padding:10px 14px;border-radius:10px;color:#021125;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent)}
+    .topbar{display:flex;gap:12px;align-items:center}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:18px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    .card h3{margin:0 0 6px 0}
+    .meta{font-size:13px;color:var(--muted);margin-bottom:10px}
+    .card .actions{display:flex;gap:8px}
+
+    .panel{margin-top:20px;background:var(--card);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+
+    /* quiz runner */
+    .quiz-area{display:none}
+    .question{padding:14px;border-radius:10px;background:var(--glass);margin-bottom:10px}
+    .answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .answer{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);cursor:pointer}
+    .answer.correct{outline:3px solid rgba(16,185,129,0.18)}
+    .answer.wrong{outline:3px solid rgba(239,68,68,0.18)}
+
+    /* add-modal */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal .sheet{width:100%;max-width:900px;background:#061022;padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);}
+    .row{display:flex;gap:8px;align-items:center}
+    label{font-size:13px;color:var(--muted);}
+    .questions-list{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+    .q-item{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+    .small{font-size:12px;color:var(--muted)}
+
+    footer{margin-top:26px;color:var(--muted);text-align:center;font-size:12px}
+
+    @media (max-width:700px){.answers{grid-template-columns:1fr}.row{flex-direction:column;align-items:stretch}}
+  </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <h1>🎯 OneQuiz</h1>
-            </div>
-            <div class="nav-menu">
-                <a href="index.html" class="nav-link active">Strona główna</a>
-                <a href="admin.html" class="nav-link">Panel administracyjny</a>
-            </div>
-        </div>
-    </nav>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Profesjonalne Quizy</h1>
+        <div class="small">Szybko twórz, wyszukuj i eksportuj quizy. Dane domyślnie z appData.js (window.quizzes)</div>
+      </div>
+      <div class="controls topbar">
+        <input id="search" type="search" placeholder="Szukaj quizów po nazwie lub tytule..." />
+        <button id="openAdd">Dodaj quiz</button>
+        <button id="exportBtn" class="ghost">Eksportuj appData.js</button>
+        <label class="ghost" style="padding:8px;border-radius:8px;cursor:pointer"><input id="importFile" type="file" accept=".js,.json" style="display:none"/>Import</label>
+      </div>
+    </header>
 
-    <div class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">Sprawdź swoją wiedzę!</h1>
-            <p class="hero-subtitle">Wybierz quiz i rozpocznij zabawę w nauce</p>
+    <section class="panel">
+      <div id="list" class="grid" aria-live="polite"></div>
+
+      <div class="quiz-area card" id="quizArea">
+        <div id="quizHeader"></div>
+        <div id="questionWrap"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+          <button id="prevBtn" class="ghost">Poprzednie</button>
+          <button id="nextBtn">Następne</button>
+          <div style="margin-left:auto;color:var(--muted)" id="progress"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- modal for adding quiz -->
+    <div id="modal" class="modal" role="dialog" aria-modal="true">
+      <div class="sheet">
+        <div style="display:flex;justify-content:space-between;align-items:center"><h3>Dodaj / Edytuj Quiz</h3><button id="closeModal" class="ghost">Zamknij</button></div>
+        <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1"><label>Unikalny klucz (bez spacji)</label><input id="quizKey" placeholder="np. historia" /></div>
+          <div style="flex:2"><label>Tytuł</label><input id="quizTitle" placeholder="Tytuł quizu" /></div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <h4>Pytania</h4>
+          <div>
+            <button id="addQuestion">Dodaj pytanie</button>
+            <button id="clearQuestions" class="ghost">Wyczyść</button>
+          </div>
+        </div>
+        <div class="questions-list" id="questionsList"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+          <button id="saveQuiz">Zapisz quiz</button>
+        </div>
+      </div>
     </div>
 
-    <div class="main-container">
-        <!-- Wyszukiwarka -->
-        <div class="search-section">
-            <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Szukaj quizu..." class="search-input">
-            </div>
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">Wszystkie</button>
-                <button class="filter-btn" data-filter="recent">Najnowsze</button>
-                <button class="filter-btn" data-filter="popular">Popularne</button>
-            </div>
-        </div>
+    <footer>Plik appData.js możesz pobrać przyciskiem "Eksportuj appData.js". Quizy zapisywane są też w localStorage.</footer>
+  </div>
 
-        <!-- Statystyki -->
-        <div class="stats-section">
-            <div class="stat-card">
-                <div class="stat-icon">📚</div>
-                <div class="stat-content">
-                    <div class="stat-number" id="totalQuizzes">0</div>
-                    <div class="stat-label">Dostępnych quizów</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">❓</div>
-                <div class="stat-content">
-                    <div class="stat-number" id="totalQuestions">0</div>
-                    <div class="stat-label">Pytań do rozwiązania</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🏆</div>
-                <div class="stat-content">
-                    <div class="stat-number" id="completedQuizzes">0</div>
-                    <div class="stat-label">Ukończonych quizów</div>
-                </div>
-            </div>
-        </div>
+  <!-- ===== appData.js (wbudowany) ===== -->
+  <script>
+// appData.js - przykładowe dane (format: window.quizzes['nazwa'] = { title, questions })
+window.quizzes = {
+    'historia': {
+        title: 'Quiz z Historii Polski',
+        questions: [
+            { question: 'W którym roku Polska odzyskała niepodległość?', answers: ['1918', '1920', '1914', '1916'], correct: 0 },
+            { question: 'Kto był pierwszym królem Polski?', answers: ['Bolesław Chrobry', 'Mieszko I', 'Kazimierz Wielki', 'Władysław Łokietek'], correct: 0 },
+            { question: 'W którym roku odbyła się bitwa pod Grunwaldem?', answers: ['1410', '1420', '1400', '1415'], correct: 0 },
+            { question: 'Kto był autorem Konstytucji 3 Maja?', answers: ['Hugo Kołłątaj i Stanisław Małachowski', 'Jan Zamoyski', 'Stefan Batory', 'Zygmunt August'], correct: 0 },
+            { question: 'W którym roku upadła dynastia Piastów?', answers: ['1370', '1385', '1410', '1399'], correct: 0 }
+        ]
+    },
+    'geografia': {
+        title: 'Quiz z Geografii Świata',
+        questions: [
+            { question: 'Jaka jest stolica Australii?', answers: ['Canberra', 'Sydney', 'Melbourne', 'Perth'], correct: 0 },
+            { question: 'Która rzeka jest najdłuższa na świecie?', answers: ['Nil', 'Amazonka', 'Jangcy', 'Missisipi'], correct: 1 },
+            { question: 'Na którym kontynencie leży Egipt?', answers: ['Afryka', 'Azja', 'Europa', 'Obie A i B'], correct: 0 },
+            { question: 'Jak nazywa się najwyższy szczyt świata?', answers: ['Mount Everest', 'K2', 'Kangchenjunga', 'Lhotse'], correct: 0 },
+            { question: 'Ile oceanów znajduje się na Ziemi?', answers: ['5', '4', '6', '3'], correct: 0 }
+        ]
+    },
+    'nauka': {
+        title: 'Quiz Naukowy',
+        questions: [
+            { question: 'Jaki jest symbol chemiczny złota?', answers: ['Au', 'Ag', 'Fe', 'Cu'], correct: 0 },
+            { question: 'Ile planet znajduje się w Układzie Słonecznym?', answers: ['8', '9', '7', '10'], correct: 0 },
+            { question: 'Kto odkrył penicylinę?', answers: ['Alexander Fleming', 'Louis Pasteur', 'Marie Curie', 'Isaac Newton'], correct: 0 },
+            { question: 'Jaka jest prędkość światła w próżni?', answers: ['300 000 km/s', '150 000 km/s', '500 000 km/s', '200 000 km/s'], correct: 0 },
+            { question: 'Co to jest DNA?', answers: ['Kwas deoksyrybonukleinowy', 'Kwas rybonukleinowy', 'Białko', 'Węglowodan'], correct: 0 }
+        ]
+    },
+    'naukadwa': {
+        title: 'Quiz Naukowy',
+        questions: [
+            { question: 'Jaki jest symbol chemiczny złota?', answers: ['Au', 'Ag', 'Fe', 'Cu'], correct: 0 },
+            { question: 'Ile planet znajduje się w Układzie Słonecznym?', answers: ['8', '9', '7', '10'], correct: 0 },
+            { question: 'Kto odkrył penicylinę?', answers: ['Alexander Fleming', 'Louis Pasteur', 'Marie Curie', 'Isaac Newton'], correct: 0 },
+            { question: 'Jaka jest prędkość światła w próżni?', answers: ['300 000 km/s', '150 000 km/s', '500 000 km/s', '200 000 km/s'], correct: 0 },
+            { question: 'Co to jest DNA?', answers: ['Kwas deoksyrybonukleinowy', 'Kwas rybonukleinowy', 'Białko', 'Węglowodan'], correct: 0 }
+        ]
+    },
+    'sport': {
+        title: 'Quiz Sportowy',
+        questions: [
+            { question: 'W którym roku odbyły się pierwsze nowożytne Igrzyska Olimpijskie?', answers: ['1896', '1900', '1888', '1904'], correct: 0 },
+            { question: 'Ile zawodników gra w drużynie piłkarskiej na boisku?', answers: ['11', '10', '12', '9'], correct: 0 },
+            { question: 'Kto jest najlepszym strzelcem w historii Mistrzostw Świata w piłce nożnej?', answers: ['Miroslav Klose', 'Ronaldo', 'Gerd Müller', 'Pelé'], correct: 0 },
+            { question: 'Jak nazywa się główny turniej tenisowy rozgrywany w Londynie?', answers: ['Wimbledon', 'US Open', 'French Open', 'Australian Open'], correct: 0 },
+            { question: 'Ile punktów jest warte trafienie kosza za linią 3 punktów w koszykówce?', answers: ['3', '2', '4', '5'], correct: 0 }
+        ]
+    },
+    'programowanie': {
+        title: 'Quiz Programowanie',
+        questions: [
+            { question: 'test,', answers: ['tak', 'n', 'n', 'n'], correct: 0 },
+            { question: ' test2', answers: ['n', 't', 'n', 'n'], correct: 1 },
+            { question: ' test3', answers: ['n', 'n', 't', 'n'], correct: 2 },
+            { question: ' test4', answers: ['n', 'n', 'n', 't'], correct: 3 }
+        ]
+    },
+    'filmy': {
+        title: 'Quiz Filmowy',
+        questions: [
+            { question: 'Kto wyreżyserował film "Incepcja"?', answers: ['Christopher Nolan', 'Steven Spielberg', 'Quentin Tarantino', 'Martin Scorsese'], correct: 0 },
+            { question: 'Który film zdobył najwięcej Oscarów w historii?', answers: ['"Titanic", "Ben-Hur" i "Władca Pierścieni: Powrót króla" (po 11)', '"Ojciec chrzestny"', '"Avatар"', '"Casablanca"'], correct: 0 },
+            { question: 'Jak nazywa się pierwszy film Disneya?', answers: ['Królewna Śnieżka i siedmiu krasnoludków', 'Pinokio', 'Fantazja', 'Bambi'], correct: 0 },
+            { question: 'Kto zagrał główną rolę w filmie "Matrix"?', answers: ['Keanu Reeves', 'Brad Pitt', 'Tom Cruise', 'Leonardo DiCaprio'], correct: 0 },
+            { question: 'W którym roku premierę miał pierwszy film o Jamesie Bondzie?', answers: ['1962', '1965', '1960', '1958'], correct: 0 }
+        ]
+    }
+};
 
-        <!-- Lista quizów -->
-        <div class="quizzes-section">
-            <h2 class="section-title">Dostępne quizy</h2>
-            <div id="quizzesList" class="quizzes-grid">
-                <!-- Quizy będą wczytane przez JavaScript -->
-            </div>
-        </div>
+// Jeśli w localStorage jest kopia - wczytaj ją (priorytet localStorage, bo użytkownik mógł dodać quizy)
+(function(){
+  try{
+    const saved = localStorage.getItem('quizzes_v1');
+    if(saved){
+      const parsed = JSON.parse(saved);
+      if(parsed && typeof parsed === 'object') window.quizzes = parsed;
+    }
+  }catch(e){console.warn('Nie udało się wczytać lokalnego stanu', e)}
+})();
+  </script>
 
-        <!-- Brak wyników -->
-        <div id="noResults" class="no-results" style="display: none;">
-            <div class="no-results-icon">🔍</div>
-            <h3>Nie znaleziono quizów</h3>
-            <p>Spróbuj użyć innych słów kluczowych</p>
-        </div>
-    </div>
+  <!-- ===== script.js (wbudowany) ===== -->
+  <script>
+  // Helpery
+  const $ = (s,root=document)=>root.querySelector(s);
+  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
 
-    <footer class="footer">
-        <p>&copy; 2024 OneQuiz. Wszystkie prawa zastrzeżone.</p>
-    </footer>
+  // Elementy
+  const listEl = $('#list');
+  const searchEl = $('#search');
+  const modal = $('#modal');
+  const openAdd = $('#openAdd');
+  const closeModal = $('#closeModal');
+  const quizKey = $('#quizKey');
+  const quizTitle = $('#quizTitle');
+  const questionsList = $('#questionsList');
+  const addQuestionBtn = $('#addQuestion');
+  const clearQuestionsBtn = $('#clearQuestions');
+  const saveQuizBtn = $('#saveQuiz');
+  const exportBtn = $('#exportBtn');
+  const importFile = $('#importFile');
+  const quizArea = $('#quizArea');
+  const quizHeader = $('#quizHeader');
+  const questionWrap = $('#questionWrap');
+  const prevBtn = $('#prevBtn');
+  const nextBtn = $('#nextBtn');
+  const progressEl = $('#progress');
 
-    <script src="quizManager.js"></script>
-    <script src="home.js"></script>
+  // State
+  let state = { quizzes: window.quizzes || {}, activeQuizKey: null, currentIndex: 0, userAnswers: [] };
+
+  // --- Persist
+  function persist(){
+    try{ localStorage.setItem('quizzes_v1', JSON.stringify(state.quizzes)); }catch(e){console.warn(e)}
+  }
+
+  // --- Render list of quizzes
+  function renderList(filter=''){
+    listEl.innerHTML='';
+    const keys = Object.keys(state.quizzes).sort();
+    const qkeys = keys.filter(k=>{
+      const t = (k + ' ' + (state.quizzes[k].title||'')).toLowerCase();
+      return t.includes(filter.trim().toLowerCase());
+    });
+    if(qkeys.length===0){ listEl.innerHTML='<div class="card">Brak quizów</div>'; return }
+    qkeys.forEach(k=>{
+      const q = state.quizzes[k];
+      const card = document.createElement('div'); card.className='card';
+      card.innerHTML = `<h3>${escapeHtml(q.title||k)}</h3><div class="meta">klucz: <code>${escapeHtml(k)}</code> • ${q.questions.length} pyt.</div>
+        <div class="actions"><button data-key="${k}" class="openBtn">Otwórz</button><button data-key="${k}" class="editBtn ghost">Edytuj</button><button data-key="${k}" class="delBtn ghost">Usuń</button></div>`;
+      listEl.appendChild(card);
+    });
+  }
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // --- Open quiz runner
+  function openQuiz(key){
+    state.activeQuizKey = key; state.currentIndex = 0; state.userAnswers = [];
+    renderQuiz();
+    quizArea.style.display='block';
+    quizArea.scrollIntoView({behavior:'smooth'});
+  }
+
+  function renderQuiz(){
+    const q = state.quizzes[state.activeQuizKey];
+    if(!q) return;
+    quizHeader.innerHTML = `<h2>${escapeHtml(q.title)}</h2><div class="small">Quiz: <code>${escapeHtml(state.activeQuizKey)}</code></div>`;
+    renderQuestion(state.currentIndex);
+    updateProgress();
+  }
+
+  function renderQuestion(index){
+    const q = state.quizzes[state.activeQuizKey];
+    if(!q) return;
+    const item = q.questions[index];
+    questionWrap.innerHTML = '';
+    if(!item){ questionWrap.innerHTML = '<div class="small">Brak pytania</div>'; return }
+    const qEl = document.createElement('div'); qEl.className='question';
+    qEl.innerHTML = `<strong>Pytanie ${index+1} / ${q.questions.length}</strong><div style="margin-top:8px">${escapeHtml(item.question)}</div>`;
+    const answersEl = document.createElement('div'); answersEl.className='answers';
+    item.answers.forEach((a,i)=>{
+      const btn = document.createElement('div'); btn.className='answer'; btn.tabIndex=0; btn.dataset.idx = i; btn.innerText = a;
+      btn.addEventListener('click', ()=>selectAnswer(i));
+      btn.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') selectAnswer(i); });
+      answersEl.appendChild(btn);
+    });
+    questionWrap.appendChild(qEl); questionWrap.appendChild(answersEl);
+    // show previously selected
+    const prev = state.userAnswers[index];
+    if(typeof prev === 'number') markSelection(prev);
+  }
+
+  function selectAnswer(idx){
+    state.userAnswers[state.currentIndex] = idx; markSelection(idx);
+  }
+
+  function markSelection(idx){
+    $$('.answer', questionWrap).forEach(a=> a.classList.remove('selected','correct','wrong'));
+    const q = state.quizzes[state.activeQuizKey];
+    const correct = q.questions[state.currentIndex].correct;
+    const answersEls = $$('.answer', questionWrap);
+    answersEls.forEach(a=>{ if(Number(a.dataset.idx) === idx) a.classList.add('selected'); });
+    // show correctness immediately
+    answersEls.forEach(a=>{
+      const i = Number(a.dataset.idx);
+      if(i === correct) a.classList.add('correct');
+      else if(i === idx && idx !== correct) a.classList.add('wrong');
+    });
+  }
+
+  function updateProgress(){
+    const q = state.quizzes[state.activeQuizKey];
+    progressEl.innerText = `Pytanie ${state.currentIndex+1} / ${q.questions.length}`;
+  }
+
+  prevBtn.addEventListener('click', ()=>{
+    if(state.currentIndex>0){ state.currentIndex--; renderQuestion(state.currentIndex); updateProgress(); }
+  });
+  nextBtn.addEventListener('click', ()=>{
+    const q = state.quizzes[state.activeQuizKey];
+    if(state.currentIndex < q.questions.length - 1){ state.currentIndex++; renderQuestion(state.currentIndex); updateProgress(); }
+    else showResult();
+  });
+
+  function showResult(){
+    const q = state.quizzes[state.activeQuizKey];
+    const total = q.questions.length; let score=0;
+    q.questions.forEach((item,i)=>{ if(state.userAnswers[i] === item.correct) score++; });
+    questionWrap.innerHTML = `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,0.02)"><h3>Twój wynik: ${score} / ${total}</h3><div class="small">Procent: ${Math.round((score/total)*100)}%</div></div>`;
+    progressEl.innerText = 'Wyniki';
+  }
+
+  // --- Add / Edit quiz UI
+  function openModalForEdit(key){
+    modal.style.display='flex';
+    questionsList.innerHTML='';
+    if(key && state.quizzes[key]){
+      quizKey.value = key; quizKey.disabled = true; quizTitle.value = state.quizzes[key].title || '';
+      state.quizzes[key].questions.forEach(q=> addQuestionToForm(q));
+    } else {
+      quizKey.value = ''; quizKey.disabled = false; quizTitle.value = '';
+    }
+  }
+
+  function addQuestionToForm(q){
+    const num = questionsList.children.length + 1;
+    const div = document.createElement('div'); div.className='q-item';
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong>Pytanie ${num}</strong><div><button class="delQ ghost">Usuń</button></div></div>
+      <div style="margin-top:8px"><input class="qtext" placeholder="Treść pytania" value="${escapeHtml(q?.question||'')}"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <input class="ans a0" placeholder="Odpowiedź A" value="${escapeHtml(q?.answers?.[0]||'')}" />
+        <input class="ans a1" placeholder="Odpowiedź B" value="${escapeHtml(q?.answers?.[1]||'')}" />
+        <input class="ans a2" placeholder="Odpowiedź C" value="${escapeHtml(q?.answers?.[2]||'')}" />
+        <input class="ans a3" placeholder="Odpowiedź D" value="${escapeHtml(q?.answers?.[3]||'')}" />
+      </div>
+      <div style="margin-top:8px"><label class="small">Indeks poprawnej odpowiedzi (0-3)</label> <input class="correct" value="${typeof q?.correct === 'number'? q.correct : 0}"/></div>`;
+    questionsList.appendChild(div);
+    $('.delQ',div).addEventListener('click', ()=>{ div.remove(); refreshQuestionNumbers(); });
+  }
+  function refreshQuestionNumbers(){ Array.from(questionsList.children).forEach((c,i)=>{ c.querySelector('strong').innerText = 'Pytanie ' + (i+1); }); }
+
+  addQuestionBtn.addEventListener('click', ()=> addQuestionToForm({question:'',answers:['','','',''],correct:0}));
+  clearQuestionsBtn.addEventListener('click', ()=>{ questionsList.innerHTML=''; });
+
+  openAdd.addEventListener('click', ()=>{ openModalForEdit(); });
+  closeModal.addEventListener('click', ()=>{ modal.style.display='none'; });
+
+  saveQuizBtn.addEventListener('click', ()=>{
+    const key = quizKey.value.trim(); const title = quizTitle.value.trim();
+    if(!key.match(/^[-_a-zA-Z0-9]+$/)){ alert('Klucz musi być unikalny i składać się z liter, cyfr, - lub _'); return; }
+    const items = [];
+    for(const c of questionsList.children){
+      const qtext = $('.qtext',c).value.trim(); const a0=$('.a0',c).value; const a1=$('.a1',c).value; const a2=$('.a2',c).value; const a3=$('.a3',c).value; const corr = parseInt($('.correct',c).value) || 0;
+      if(!qtext){ alert('Każde pytanie wymaga treści'); return; }
+      items.push({ question: qtext, answers: [a0,a1,a2,a3], correct: Math.max(0,Math.min(3,corr)) });
+    }
+    if(items.length===0){ alert('Dodaj przynajmniej jedno pytanie'); return; }
+    state.quizzes[key] = { title: title || key, questions: items };
+    persist(); renderList(searchEl.value);
+    modal.style.display='none';
+  });
+
+  // --- Delete quiz
+  listEl.addEventListener('click', (e)=>{
+    if(e.target.classList.contains('openBtn')){ openQuiz(e.target.dataset.key); }
+    if(e.target.classList.contains('editBtn')){ openModalForEdit(e.target.dataset.key); modal.style.display='flex'; }
+    if(e.target.classList.contains('delBtn')){
+      if(confirm('Usunąć quiz "'+ e.target.dataset.key + '"?')){ delete state.quizzes[e.target.dataset.key]; persist(); renderList(searchEl.value); }
+    }
+  });
+
+  // --- Search
+  searchEl.addEventListener('input', ()=> renderList(searchEl.value));
+
+  // --- Export
+  exportBtn.addEventListener('click', ()=>{
+    const content = `// appData.js — wyeksportowane\nwindow.quizzes = ${JSON.stringify(state.quizzes, null, 2)};\n`;
+    const blob = new Blob([content], {type:'text/javascript'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'appData.js'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // --- Import
+  importFile.addEventListener('change', (e)=>{
+    const f = e.target.files[0]; if(!f) return; const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        // oczyszczamy zwykle struktury typu "window.quizzes = {...};"
+        let txt = reader.result;
+        const m = txt.match(/window\.quizzes\s*=\s*(\{[\s\S]*\})\s*;?/);
+        if(m){ txt = m[1]; }
+        const parsed = JSON.parse(txt);
+        if(parsed && typeof parsed === 'object'){
+          state.quizzes = parsed; window.quizzes = parsed; persist(); renderList(searchEl.value); alert('Zaimportowano quizy.');
+        } else alert('Nieprawidłowy format pliku');
+      }catch(err){ alert('Błąd podczas importu: ' + err.message); }
+    };
+    reader.readAsText(f);
+  });
+
+  // --- Init
+  (function init(){ renderList(''); })();
+
+  // Accessibility: close modal on Esc
+  window.addEventListener('keydown',(e)=>{ if(e.key==='Escape') modal.style.display='none'; });
+  </script>
 </body>
 </html>
