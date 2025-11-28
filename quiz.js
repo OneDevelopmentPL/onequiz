@@ -174,7 +174,7 @@ class QuizApp {
     }
 }
 
-// Uruchom aplikację
+// Uruchom aplikacj
 document.addEventListener('DOMContentLoaded', () => {
     new QuizApp();
 });
